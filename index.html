@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>QR &rarr; AR Floating Poster</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b0f1a;
+      --panel: #111827;
+      --panel-2: #1f2937;
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+      --accent: #7dd3fc;
+      --accent-2: #a78bfa;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0; background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      background:
+        radial-gradient(ellipse at 20% 0%, rgba(124,58,237,0.25), transparent 50%),
+        radial-gradient(ellipse at 80% 100%, rgba(125,211,252,0.18), transparent 55%),
+        var(--bg);
+      min-height: 100vh;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 48px 24px 80px; }
+    header { text-align: center; margin-bottom: 40px; }
+    .pill {
+      display: inline-block; padding: 6px 14px; border-radius: 999px;
+      background: rgba(125,211,252,0.12); color: var(--accent);
+      font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+      border: 1px solid rgba(125,211,252,0.3);
+    }
+    h1 {
+      font-size: clamp(32px, 5vw, 56px); margin: 18px 0 12px; letter-spacing: -1px;
+      background: linear-gradient(90deg, #fff, var(--accent));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .sub { color: var(--muted); font-size: 17px; max-width: 640px; margin: 0 auto; line-height: 1.55; }
+
+    .grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 40px;
+    }
+    @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 20px; padding: 28px;
+    }
+    .card h2 { margin: 0 0 6px; font-size: 22px; }
+    .card .step { color: var(--accent); font-weight: 700; letter-spacing: 2px; font-size: 12px; }
+    .card p { color: var(--muted); line-height: 1.55; margin: 8px 0 16px; }
+
+    #qr-container {
+      background: #fff; padding: 16px; border-radius: 14px;
+      width: fit-content; margin: 8px auto 14px;
+    }
+    #qr-container canvas, #qr-container img { display: block; }
+    .url {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px; word-break: break-all; color: var(--accent);
+      background: rgba(125,211,252,0.08); border: 1px solid rgba(125,211,252,0.2);
+      padding: 8px 12px; border-radius: 8px; text-align: center;
+    }
+
+    .marker-preview {
+      background: #fff; border-radius: 14px; padding: 18px; text-align: center;
+      margin: 8px 0 14px;
+    }
+    .marker-preview img { width: 70%; max-width: 240px; aspect-ratio: 1; }
+
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn {
+      flex: 1; min-width: 140px;
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 12px 18px; border-radius: 10px; text-decoration: none;
+      font-weight: 600; font-size: 14px; letter-spacing: 0.3px;
+      border: 1px solid transparent; cursor: pointer; transition: transform 0.15s ease;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #0b0f1a;
+    }
+    .btn-secondary {
+      background: rgba(255,255,255,0.05); color: var(--text);
+      border-color: rgba(255,255,255,0.12);
+    }
+
+    .how {
+      margin-top: 48px; padding: 28px;
+      background: rgba(255,255,255,0.03); border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .how h2 { margin-top: 0; }
+    .how ol { color: var(--muted); line-height: 1.7; padding-left: 22px; }
+    .how ol li b { color: var(--text); }
+    .how code {
+      background: rgba(125,211,252,0.1); color: var(--accent);
+      padding: 2px 6px; border-radius: 4px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px;
+    }
+    footer {
+      text-align: center; color: var(--muted); margin-top: 48px; font-size: 13px;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <span class="pill">QR &rarr; AR</span>
+      <h1>Scan. Aim. Float.</h1>
+      <p class="sub">
+        A live demo of marker-based augmented reality in the browser.
+        Scan the QR code with your phone, then point your camera at the printable marker
+        to see a poster float above it &mdash; tracked in real time to the marker's position
+        and orientation.
+      </p>
+    </header>
+
+    <div class="grid">
+      <!-- Step 1: QR code -->
+      <div class="card">
+        <div class="step">STEP 1</div>
+        <h2>Scan with your phone</h2>
+        <p>This QR opens the AR experience on your phone (camera permission required).</p>
+        <div id="qr-container"></div>
+        <div class="url" id="ar-url">loading&hellip;</div>
+      </div>
+
+      <!-- Step 2: Marker -->
+      <div class="card">
+        <div class="step">STEP 2</div>
+        <h2>Aim at the marker</h2>
+        <p>Print the marker poster, or just leave it on your computer screen and aim your phone at it.</p>
+        <div class="marker-preview">
+          <img src="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/HIRO.jpg" alt="HIRO marker preview" />
+        </div>
+        <div class="actions">
+          <a class="btn btn-primary" href="marker.html" target="_blank">Open printable poster</a>
+          <a class="btn btn-secondary" href="ar.html">Try AR on this device</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="how">
+      <h2>How it works</h2>
+      <ol>
+        <li><b>QR</b> &mdash; the QR code above is generated dynamically and points to <code>ar.html</code> on this same domain, so it always works wherever this site is hosted.</li>
+        <li><b>Marker tracking</b> &mdash; <code>ar.html</code> uses <a href="https://aframe.io" style="color:var(--accent)">A-Frame</a> + <a href="https://ar-js-org.github.io/AR.js-Docs/" style="color:var(--accent)">AR.js</a> to detect the HIRO marker through your phone camera and recover its 3D pose every frame.</li>
+        <li><b>Overlay</b> &mdash; a 3D scene (the floating poster, glow, label, particles) is rendered anchored to that pose, so it stays locked to the marker as you move your phone around it.</li>
+        <li><b>HTTPS</b> &mdash; mobile browsers require HTTPS for camera access. GitHub Pages serves this site over HTTPS, which is why it works on your phone.</li>
+      </ol>
+    </div>
+
+    <footer>
+      Built with A-Frame &middot; AR.js &middot; QRCode.js &middot;
+      <a href="https://github.com/" target="_blank">view source</a>
+    </footer>
+  </div>
+
+  <script>
+    // Build the AR URL from the current location so it matches whatever domain
+    // this site is deployed at (localhost, github.io, custom domain, etc).
+    function buildArUrl() {
+      const here = new URL(window.location.href);
+      // strip any trailing index.html or query/hash
+      const base = here.origin + here.pathname.replace(/index\.html$/, '');
+      return new URL('ar.html', base).toString();
+    }
+    const arUrl = buildArUrl();
+    document.getElementById('ar-url').textContent = arUrl;
+
+    new QRCode(document.getElementById('qr-container'), {
+      text: arUrl,
+      width: 240,
+      height: 240,
+      colorDark: '#0b0f1a',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  </script>
+</body>
+</html>

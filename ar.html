@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>AR Experience</title>
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
+  <style>
+    html, body { margin: 0; padding: 0; overflow: hidden; width: 100%; height: 100%; background: #000; }
+    .a-enter-vr { display: none !important; }
+    #hint {
+      position: fixed; top: 12px; left: 12px; right: 12px; z-index: 10;
+      background: rgba(0,0,0,0.62); color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4;
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      transition: opacity 0.6s ease;
+    }
+    #hint b { color: #6cf; }
+    #hint.hidden { opacity: 0; pointer-events: none; }
+    #back {
+      position: fixed; bottom: 16px; left: 16px; z-index: 10;
+      background: rgba(0,0,0,0.62); color: #fff; text-decoration: none;
+      padding: 8px 14px; border-radius: 999px; font-size: 13px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    }
+  </style>
+</head>
+<body>
+  <div id="hint">
+    <b>Point your camera at the marker</b><br/>
+    Open the QR poster on your computer (or print it) and aim your phone at the black <b>HIRO</b> square.
+  </div>
+  <a id="back" href="index.html">&larr; back</a>
+
+  <a-scene
+    embedded
+    vr-mode-ui="enabled: false"
+    renderer="logarithmicDepthBuffer: true; precision: medium; antialias: true; alpha: true;"
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;">
+
+    <a-assets>
+      <img id="posterTexture" crossorigin="anonymous" src="poster-art.svg" />
+    </a-assets>
+
+    <a-marker preset="hiro" id="marker" smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="3">
+
+      <!-- Floating poster, rises above the marker and gently bobs -->
+      <a-entity position="0 0.75 0" animation="property: position; to: 0 0.95 0; dir: alternate; loop: true; dur: 2400; easing: easeInOutSine">
+        <a-plane
+          src="#posterTexture"
+          width="1.4" height="2.0"
+          material="transparent: true; alphaTest: 0.01; side: double"
+          animation="property: rotation; to: 0 360 0; loop: true; dur: 9000; easing: linear">
+        </a-plane>
+
+        <!-- soft glow rim behind the poster -->
+        <a-plane
+          color="#7dd3fc" opacity="0.18"
+          width="1.7" height="2.3"
+          position="0 0 -0.02"
+          material="transparent: true; side: double">
+        </a-plane>
+      </a-entity>
+
+      <!-- A pedestal connecting the poster to the marker -->
+      <a-cylinder
+        position="0 0.05 0"
+        radius="0.04" height="0.1"
+        color="#7dd3fc" opacity="0.7"
+        material="transparent: true">
+      </a-cylinder>
+
+      <!-- 3D label below the poster, locked to marker orientation -->
+      <a-entity position="0 -0.15 0" rotation="-90 0 0">
+        <a-text
+          value="AR ACTIVE"
+          align="center"
+          color="#7dd3fc"
+          width="3"
+          position="0 0 0">
+        </a-text>
+      </a-entity>
+
+      <!-- Particles: small floating spheres around the poster -->
+      <a-sphere position="0.7 0.6 0.3" radius="0.04" color="#fbbf24"
+        animation="property: position; to: 0.7 1.1 0.3; dir: alternate; loop: true; dur: 1800; easing: easeInOutSine"></a-sphere>
+      <a-sphere position="-0.7 0.9 -0.3" radius="0.05" color="#a78bfa"
+        animation="property: position; to: -0.7 1.4 -0.3; dir: alternate; loop: true; dur: 2200; easing: easeInOutSine"></a-sphere>
+      <a-sphere position="0.4 1.3 -0.4" radius="0.035" color="#34d399"
+        animation="property: position; to: 0.4 0.8 -0.4; dir: alternate; loop: true; dur: 2000; easing: easeInOutSine"></a-sphere>
+
+    </a-marker>
+
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <script>
+    // Hide the hint once the marker is detected the first time
+    const marker = document.querySelector('#marker');
+    const hint = document.querySelector('#hint');
+    let seen = false;
+    marker.addEventListener('markerFound', () => {
+      if (seen) return;
+      seen = true;
+      setTimeout(() => hint.classList.add('hidden'), 800);
+    });
+    marker.addEventListener('markerLost', () => {
+      hint.classList.remove('hidden');
+      hint.innerHTML = '<b>Marker lost</b><br/>Aim back at the HIRO square to bring the AR poster back.';
+    });
+  </script>
+</body>
+</html>
